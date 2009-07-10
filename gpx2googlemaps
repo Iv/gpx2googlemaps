@@ -28,7 +28,7 @@ import re
 import subprocess
 import sys
 from tempfile import gettempdir
-from urllib2 import urlopen
+from urllib2 import HTTPError, urlopen
 try:
     from xml.etree.cElementTree import ElementTree, parse
 except ImportError:
@@ -99,8 +99,7 @@ class Waypoint(Coord):
 
 class Tile(object):
 
-    def __init__(self, v, tx, ty, zoom):
-        self.v = v
+    def __init__(self, tx, ty, zoom):
         self.tx = tx
         self.ty = ty
         self.zoom = zoom
@@ -108,31 +107,30 @@ class Tile(object):
     def __repr__(self):
         return '%s(%s, %s, %s, %s)' % (self.__class__.__name__, repr(self.v), repr(self.tx), repr(self.ty), repr(self.zoom))
 
-    def url(self):
-        gtx, gty = PROJECTION.GoogleTile(self.tx, self.ty, self.zoom)
-        return 'http://mt0.google.com/mt/v=%s&hl=en&x=%d&y=%d&z=%d&s=' % (self.v, gtx, gty, self.zoom)
+    def d(self):
+        x, y = PROJECTION.GoogleTile(self.tx, self.ty, self.zoom)
+        return dict(z=self.zoom, x=x, y=y)
 
     def bounds(self):
         minLat, minLon, maxLat, maxLon = PROJECTION.TileLatLonBounds(self.tx, self.ty, self.zoom)
         return (Coord(minLat, minLon), Coord(maxLat, maxLon))
 
     def east(self):
-        return self.__class__(self.v, self.tx + 1, self.ty, self.zoom)
+        return self.__class__(self.tx + 1, self.ty, self.zoom)
 
     def north(self):
-        return self.__class__(self.v, self.tx, self.ty + 1, self.zoom)
+        return self.__class__(self.tx, self.ty + 1, self.zoom)
 
 
 class Map(object):
 
-    def __init__(self, v, bounds, zoom, border=0):
-        self.v = v
+    def __init__(self, bounds, zoom, border=0):
         self.bounds = bounds
         self.zoom = zoom
         mx, my = PROJECTION.LatLonToMeters(bounds[0].lat, bounds[0].lon)
         tx, ty = PROJECTION.MetersToTile(mx, my, self.zoom)
         border_tiles = (border + 255) / 256
-        tile0 = Tile(self.v, tx - border_tiles, ty - border_tiles, self.zoom)
+        tile0 = Tile(tx - border_tiles, ty - border_tiles, self.zoom)
         self.tiles = [[tile0]]
         extra_rows = border_tiles
         while True:
@@ -157,8 +155,22 @@ class Map(object):
             for i, tile in enumerate(row):
                 ctx.save()
                 ctx.translate(256 * i, 256 * (len(self.tiles) - j - 1))
-                ctx.set_source(cairo.SurfacePattern(cairo.ImageSurface.create_from_png(filename_for_url(tile.url()))))
+                d = tile.d()
+                url = 'http://mt0.google.com/mt/v=w2p.87&hl=en&x=%(x)d&y=%(y)d&z=%(z)d&s=' % d
+                ctx.set_source(cairo.SurfacePattern(cairo.ImageSurface.create_from_png(filename_for_url(url))))
                 ctx.paint()
+                try:
+                    url = 'http://maps1.pgweb.cz/corr/%(z)d/%(x)d/%(y)d' % d
+                    ctx.set_source(cairo.SurfacePattern(cairo.ImageSurface.create_from_png(filename_for_url(url))))
+                    ctx.paint()
+                except HTTPError:
+                    pass
+                try:
+                    url = 'http://maps.pgweb.cz/airspace/%(z)d/%(x)d/%(y)d' % d
+                    ctx.set_source(cairo.SurfacePattern(cairo.ImageSurface.create_from_png(filename_for_url(url))))
+                    ctx.paint_with_alpha(0.75)
+                except HTTPError:
+                    pass
                 ctx.restore()
         return result
 
@@ -239,7 +251,7 @@ def main(argv):
     lats = [coord.lat for coord in boundary_coords]
     lons = [coord.lon for coord in boundary_coords]
     bounds = (Coord(min(lats), min(lons)), Coord(max(lats), max(lons)))
-    map = Map('w2p.87', bounds, options.zoom, options.border)
+    map = Map(bounds, options.zoom, options.border)
     url_cache = URLCache(options.cache_dir)
     surface = map.surface(filename_for_url=url_cache.filename_for_url)
     ctx = cairo.Context(surface)

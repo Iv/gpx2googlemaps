@@ -110,7 +110,7 @@ class Tile(object):
 
     def url(self):
         gtx, gty = PROJECTION.GoogleTile(self.tx, self.ty, self.zoom)
-        return 'http://mt0.google.com/mt/v=%s&hl=en&x=%d&y=%d&z=%d&s=' % (self.v, gtx, gty, self.zoom)
+        return 'http://mt0.google.com/vt/v=%s&hl=en&x=%d&y=%d&z=%d&s=' % (self.v, gtx, gty, self.zoom)
 
     def bounds(self):
         minLat, minLon, maxLat, maxLon = PROJECTION.TileLatLonBounds(self.tx, self.ty, self.zoom)
@@ -239,7 +239,7 @@ def main(argv):
     lats = [coord.lat for coord in boundary_coords]
     lons = [coord.lon for coord in boundary_coords]
     bounds = (Coord(min(lats), min(lons)), Coord(max(lats), max(lons)))
-    map = Map('w2p.87', bounds, options.zoom, options.border)
+    map = Map('app.117', bounds, options.zoom, options.border)
     url_cache = URLCache(options.cache_dir)
     surface = map.surface(filename_for_url=url_cache.filename_for_url)
     ctx = cairo.Context(surface)

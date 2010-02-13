@@ -9,13 +9,14 @@ Introduction
 
 `gpx2googlemaps` is designed for making turnpoint maps for paragliding and
 hang gliding competitions.  It reads a GPX file as input and generates a
-turnpoint map using map tiles from (Google Maps)[http://maps.google.com/].
+turnpoint map using map tiles from [Google Maps](http://maps.google.com/).
 
 
 Requirements
 ------------
 
 `gpx2googlemaps` requires:
+
 * [pycairo](http://www.cairographics.org/pycairo/)
 * [ImageMagick](http://www.imagemagick.org/)
 
@@ -78,15 +79,15 @@ example:
 
 ### Generating a map without waypoints
 
-You can generate a map without any waypoints using the --bounds option on its
+You can generate a map without any waypoints using the `--bounds` option on its
 own, for example:
 	$ ./gpx2googlemaps --bounds=46.5:7.5,46.7:7.7
 
 
-Changing the output file name
+### Changing the output file name
 
-The default output filename is map.png, this can be overridden with the
---output option, for example:
+The default output filename is `map.png`, this can be overridden with the
+`--output` option, for example:
 	$ ./gpx2googlemaps --output=frutigen.png frutigen.gpx
 
 

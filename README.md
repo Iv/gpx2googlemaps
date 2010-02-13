@@ -54,6 +54,10 @@ Higher zoom levels generate larger maps with more detail which may or may not
 be desirable.  Depending on the size of your flying area, zoom levels 11 to 13
 usually give the best compromise between detail and size.
 
+If you change the zoom level the turnpoint labels will be small relative to
+the map features.  Use the `--label-scale` option to make them larger, e.g.
+	$ ./gpx2googlemaps --zoom=12 --label-scale=1.5 frutigen.gpx
+
 
 ### Truncating waypoint names
 

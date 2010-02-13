@@ -57,11 +57,11 @@ class Waypoint(Coord):
         Coord.__init__(self, lat, lon)
         self.name = name
 
-    def draw(self, ctx, map):
+    def draw(self, ctx, map, label_scale=1.0):
         ctx.save()
         px, py = map.project(self)
         ctx.translate(px, py)
-        ctx.arc(0.0, 0.0, 3.0, 0.0, 2.0 * pi)
+        ctx.arc(0.0, 0.0, 3.0 * label_scale, 0.0, 2.0 * pi)
         ctx.set_source_rgb(1.0, 1.0, 0.0)
         ctx.fill_preserve()
         ctx.set_line_width(1.0)
@@ -69,13 +69,13 @@ class Waypoint(Coord):
         ctx.stroke()
         ctx.restore()
 
-    def draw_label(self, ctx, map, truncate):
+    def draw_label(self, ctx, map, truncate, label_scale=1.0):
         ctx.save()
         px, py = map.project(self)
         ctx.translate(px, py)
         ctx.select_font_face('Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-        ctx.set_font_size(10.0)
-        ctx.move_to(4.0, 0.0)
+        ctx.set_font_size(10.0 * label_scale)
+        ctx.move_to(4.0 * label_scale, 0.0)
         if truncate:
             label = self.name[:truncate]
         else:
@@ -208,11 +208,13 @@ def main(argv):
     parser.add_option('-z', '--zoom', metavar='VALUE', type='int', help='set the zoom level')
     parser.add_option('-b', '--border', metavar='N', type='int', help='include a border of N pixels')
     parser.add_option('-B', '--bounds', metavar='LIST', help='specify a list of waypoints or coordinates that must be on the map')
+    parser.add_option('--label-scale', metavar='N', type='float', help='scale the waypoint labels')
     parser.add_option('--truncate', metavar='N', type='int', help='truncate waypoint names to N characters')
     parser.add_option('--cache-dir', metavar='PATH')
     parser.set_defaults(output='map.png')
     parser.set_defaults(zoom=11)
     parser.set_defaults(border=64)
+    parser.set_defaults(label_scale=1.0)
     parser.set_defaults(cache_dir=os.path.join(gettempdir(), 'gpx2googlemaps'))
     options, args = parser.parse_args(argv)
     waypoints = []
@@ -244,9 +246,9 @@ def main(argv):
     surface = map.surface(filename_for_url=url_cache.filename_for_url)
     ctx = cairo.Context(surface)
     for waypoint in waypoints:
-        waypoint.draw(ctx, map)
+        waypoint.draw(ctx, map, options.label_scale)
     for waypoint in waypoints:
-        waypoint.draw_label(ctx, map, options.truncate)
+        waypoint.draw_label(ctx, map, options.truncate, options.label_scale)
     map.crop(surface, options.border).write_to_png(options.output)
 
 

@@ -211,10 +211,12 @@ def main(argv):
     parser.add_option('--label-scale', metavar='N', type='float', help='scale the waypoint labels')
     parser.add_option('--truncate', metavar='N', type='int', help='truncate waypoint names to N characters')
     parser.add_option('--cache-dir', metavar='PATH')
+    parser.add_option('--no-labels', action='store_false', dest='labels')
     parser.set_defaults(output='map.png')
     parser.set_defaults(zoom=11)
     parser.set_defaults(border=64)
     parser.set_defaults(label_scale=1.0)
+    parser.set_defaults(labels=True)
     parser.set_defaults(cache_dir=os.path.join(gettempdir(), 'gpx2googlemaps'))
     options, args = parser.parse_args(argv)
     waypoints = []
@@ -247,8 +249,9 @@ def main(argv):
     ctx = cairo.Context(surface)
     for waypoint in waypoints:
         waypoint.draw(ctx, map, options.label_scale)
-    for waypoint in waypoints:
-        waypoint.draw_label(ctx, map, options.truncate, options.label_scale)
+    if options.labels:
+        for waypoint in waypoints:
+            waypoint.draw_label(ctx, map, options.truncate, options.label_scale)
     map.crop(surface, options.border).write_to_png(options.output)
 
 

@@ -20,7 +20,7 @@ from __future__ import with_statement
 
 from hashlib import md5
 from logging import error
-from math import pi
+from math import pi, sqrt
 import optparse
 import os
 import os.path
@@ -215,10 +215,12 @@ def main(argv):
     parser.set_defaults(output='map.png')
     parser.set_defaults(zoom=11)
     parser.set_defaults(border=64)
-    parser.set_defaults(label_scale=1.0)
+    parser.set_defaults(label_scale=None)
     parser.set_defaults(labels=True)
     parser.set_defaults(cache_dir=os.path.join(gettempdir(), 'gpx2googlemaps'))
     options, args = parser.parse_args(argv)
+    if not options.label_scale:
+        options.label_scale = sqrt(sqrt(2.0 ** (options.zoom - 11)))
     waypoints = []
     for arg in args[1:]:
         gpx_element = parse(open(arg))

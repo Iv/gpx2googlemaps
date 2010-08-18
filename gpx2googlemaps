@@ -72,20 +72,31 @@ class Waypoint(Coord):
     def draw_label(self, ctx, map, truncate, label_scale=1.0):
         ctx.save()
         px, py = map.project(self)
-        ctx.translate(px, py)
+        ctx.translate(int(px + 0.5) + 0.5, int(py + 0.5) + 0.5)
+        ctx.scale(label_scale, label_scale)
+        ctx.move_to(0.0, 0.0)
+        ctx.line_to(3.0, -12.0)
+        ctx.arc_negative(11.0, -14.0, 2.0, pi / 2.0, 0.0)
+        ctx.arc_negative(11.0, -22.0, 2.0, 0.0, -pi / 2.0)
+        ctx.arc_negative(-11.0, -22.0, 2.0, -pi / 2.0, -pi)
+        ctx.arc_negative(-11.0, -14.0, 2.0, -pi, -1.5 * pi)
+        ctx.line_to(-3.0, -12.0)
+        ctx.line_to(0.0, 0.0)
+        ctx.set_source_rgba(1.0, 1.0, 0.0, 0.75)
+        ctx.fill_preserve()
+        ctx.set_source_rgb(0.0, 0.0, 0.0)
+        ctx.set_line_width(1.0 / label_scale)
+        ctx.stroke()
         ctx.select_font_face('Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-        ctx.set_font_size(10.0 * label_scale)
-        ctx.move_to(4.0 * label_scale, 0.0)
+        ctx.set_font_size(10.0)
+        fe = ctx.font_extents()
         if truncate:
             label = self.name[:truncate]
         else:
             label = self.name
+        ctx.move_to(-ctx.text_extents(label)[2] / 2.0, -20.0 + ctx.font_extents()[2] / 2.0)
         ctx.text_path(label)
-        ctx.set_source_rgba(1.0, 1.0, 1.0, 0.75)
-        ctx.set_line_width(1.5)
-        ctx.stroke_preserve()
         ctx.set_source_rgb(0.0, 0.0, 0.0)
-        ctx.set_line_width(1.0)
         ctx.fill()
         ctx.restore()
 
@@ -249,11 +260,12 @@ def main(argv):
     url_cache = URLCache(options.cache_dir)
     surface = map.surface(filename_for_url=url_cache.filename_for_url)
     ctx = cairo.Context(surface)
-    for waypoint in waypoints:
-        waypoint.draw(ctx, map, options.label_scale)
     if options.labels:
         for waypoint in waypoints:
             waypoint.draw_label(ctx, map, options.truncate, options.label_scale)
+    else:
+        for waypoint in waypoints:
+            waypoint.draw(ctx, map, options.label_scale)
     map.crop(surface, options.border).write_to_png(options.output)
 
 

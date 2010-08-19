@@ -69,19 +69,47 @@ class Waypoint(Coord):
         ctx.stroke()
         ctx.restore()
 
-    def draw_label(self, ctx, map, truncate, label_scale=1.0):
+    def draw_label(self, ctx, map, truncate, label_scale=1.0, direction='N'):
         ctx.save()
         px, py = map.project(self)
         ctx.translate(int(px + 0.5) + 0.5, int(py + 0.5) + 0.5)
         ctx.scale(label_scale, label_scale)
-        ctx.move_to(0.0, 0.0)
-        ctx.line_to(3.0, -12.0)
-        ctx.arc_negative(11.0, -14.0, 2.0, pi / 2.0, 0.0)
-        ctx.arc_negative(11.0, -22.0, 2.0, 0.0, -pi / 2.0)
-        ctx.arc_negative(-11.0, -22.0, 2.0, -pi / 2.0, -pi)
-        ctx.arc_negative(-11.0, -14.0, 2.0, -pi, -1.5 * pi)
-        ctx.line_to(-3.0, -12.0)
-        ctx.line_to(0.0, 0.0)
+        if direction == 'N':
+            ctx.move_to(0.0, 0.0)
+            ctx.line_to(3.0, -12.0)
+            ctx.arc_negative(11.0, -14.0, 2.0, pi / 2.0, 0.0)
+            ctx.arc_negative(11.0, -22.0, 2.0, 0.0, -pi / 2.0)
+            ctx.arc_negative(-11.0, -22.0, 2.0, -pi / 2.0, -pi)
+            ctx.arc_negative(-11.0, -14.0, 2.0, -pi, -1.5 * pi)
+            ctx.line_to(-3.0, -12.0)
+            ctx.line_to(0.0, 0.0)
+        elif direction == 'S':
+            ctx.move_to(0.0, 0.0)
+            ctx.line_to(3.0, 12.0)
+            ctx.arc(11.0, 14.0, 2.0, -pi / 2.0, 0.0)
+            ctx.arc(11.0, 22.0, 2.0, 0.0, pi / 2.0)
+            ctx.arc(-11.0, 22.0, 2.0, pi / 2.0, pi)
+            ctx.arc(-11.0, 14.0, 2.0, pi, 1.5 * pi)
+            ctx.line_to(-3.0, 12.0)
+            ctx.line_to(0.0, 0.0)
+        elif direction == 'E':
+            ctx.move_to(0.0, 0.0)
+            ctx.line_to(12.0, -3.0)
+            ctx.arc(14.0, -4.0, 2.0, pi, 1.5 * pi)
+            ctx.arc(34.0, -4.0, 2.0, 1.5 * pi, 2.0 * pi)
+            ctx.arc(34.0, 4.0, 2.0, 0.0, 0.5 * pi)
+            ctx.arc(14.0, 4.0, 2.0, 0.5 * pi, pi)
+            ctx.line_to(12.0, 3.0)
+            ctx.line_to(0.0, 0.0)
+        elif direction == 'W':
+            ctx.move_to(0.0, 0.0)
+            ctx.line_to(-12.0, 3.0)
+            ctx.arc(-14.0, 4.0, 2.0, 0.0, 0.5 * pi)
+            ctx.arc(-34.0, 4.0, 2.0, 0.5 * pi, pi)
+            ctx.arc(-34.0, -4.0, 2.0, pi, 1.5 * pi)
+            ctx.arc(-14.0, -4.0, 2.0, 1.5 * pi, 2.0 * pi)
+            ctx.line_to(-12.0, -3.0)
+            ctx.line_to(0.0, 0.0)
         ctx.set_source_rgba(1.0, 1.0, 0.0, 0.75)
         ctx.fill_preserve()
         ctx.set_source_rgb(0.0, 0.0, 0.0)
@@ -89,12 +117,18 @@ class Waypoint(Coord):
         ctx.stroke()
         ctx.select_font_face('Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
         ctx.set_font_size(10.0)
-        fe = ctx.font_extents()
         if truncate:
             label = self.name[:truncate]
         else:
             label = self.name
-        ctx.move_to(-ctx.text_extents(label)[2] / 2.0, -20.0 + ctx.font_extents()[2] / 2.0)
+        if direction == 'N':
+            ctx.move_to(-ctx.text_extents(label)[2] / 2.0, -20.0 + ctx.font_extents()[2] / 2.0)
+        elif direction == 'S':
+            ctx.move_to(-ctx.text_extents(label)[2] / 2.0, 16.0 + ctx.font_extents()[2] / 2.0)
+        elif direction == 'E':
+            ctx.move_to(24.0 - ctx.text_extents(label)[2] / 2.0, ctx.font_extents()[2] / 2.0 - 2.0)
+        elif direction == 'W':
+            ctx.move_to(-24.0 - ctx.text_extents(label)[2] / 2.0, ctx.font_extents()[2] / 2.0 - 2.0)
         ctx.text_path(label)
         ctx.set_source_rgb(0.0, 0.0, 0.0)
         ctx.fill()
@@ -219,6 +253,9 @@ def main(argv):
     parser.add_option('-z', '--zoom', metavar='VALUE', type='int', help='set the zoom level')
     parser.add_option('-b', '--border', metavar='N', type='int', help='include a border of N pixels')
     parser.add_option('-B', '--bounds', metavar='LIST', help='specify a list of waypoints or coordinates that must be on the map')
+    parser.add_option('--east', metavar='LIST', help='specify a list of waypoints whose labels should drawn east')
+    parser.add_option('--south', metavar='LIST', help='specify a list of waypoints whose labels should drawn south')
+    parser.add_option('--west', metavar='LIST', help='specify a list of waypoints whose labels should drawn west')
     parser.add_option('--label-scale', metavar='N', type='float', help='scale the waypoint labels')
     parser.add_option('--truncate', metavar='N', type='int', help='truncate waypoint names to N characters')
     parser.add_option('--cache-dir', metavar='PATH')
@@ -262,7 +299,14 @@ def main(argv):
     ctx = cairo.Context(surface)
     if options.labels:
         for waypoint in waypoints:
-            waypoint.draw_label(ctx, map, options.truncate, options.label_scale)
+            direction = 'N'
+            if options.east and waypoint.name[:options.truncate] in options.east:
+                direction = 'E'
+            if options.south and waypoint.name[:options.truncate] in options.south:
+                direction = 'S'
+            if options.west and waypoint.name[:options.truncate] in options.west:
+                direction = 'W'
+            waypoint.draw_label(ctx, map, options.truncate, options.label_scale, direction)
     else:
         for waypoint in waypoints:
             waypoint.draw(ctx, map, options.label_scale)

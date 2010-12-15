@@ -155,7 +155,8 @@ class Tile(object):
 
     def url(self):
         gtx, gty = PROJECTION.GoogleTile(self.tx, self.ty, self.zoom)
-        return 'http://mt0.google.com/vt/v=%s&hl=en&x=%d&y=%d&z=%d&s=' % (self.v, gtx, gty, self.zoom)
+        #return 'http://mt0.google.com/vt/v=%s&hl=en&x=%d&y=%d&z=%d&s=' % (self.v, gtx, gty, self.zoom)
+        return 'http://tile.openstreetmap.org/%d/%d/%d.png' % (self.zoom, gtx, gty)
 
     def bounds(self):
         minLat, minLon, maxLat, maxLon = PROJECTION.TileLatLonBounds(self.tx, self.ty, self.zoom)

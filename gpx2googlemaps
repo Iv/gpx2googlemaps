@@ -273,7 +273,7 @@ def main(argv):
     for arg in args[1:]:
         gpx_element = parse(open(arg))
         namespace = re.match(r'\{(.*)\}', gpx_element.getroot().tag).group(1)
-        for wpt_element in gpx_element.findall('/{%s}wpt' % namespace):
+        for wpt_element in gpx_element.findall('./{%s}wpt' % namespace):
             waypoints.append(Waypoint.from_element(namespace, wpt_element))
     if options.bounds:
         boundary_coords = []
